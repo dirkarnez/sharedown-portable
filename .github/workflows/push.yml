@@ -1,0 +1,18 @@
+name: node-prebuilt-actions-workflow
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+      - 'c*'
+      
+jobs:
+  test:
+    runs-on: windows-latest
+    env:
+      targetZip: destreamer-master-prebuilt.zip
+    steps:
+      - shell: cmd
+        run: |
+          https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe
+          unzip https://github.com/kylon/Sharedown/releases/download/5.2.2/sharedown.5.2.2.portable.exe
