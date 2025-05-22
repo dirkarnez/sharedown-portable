@@ -55,7 +55,7 @@ jobs:
       - name: Release prebuilt
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "sharedown-${{ github.ref_name }}-portable.zip"
+          artifacts: "sharedown-portable/sharedown-${{ github.ref_name }}-portable.zip"
           allowUpdates: true
           token: ${{ secrets.GITHUB_TOKEN }}
           
