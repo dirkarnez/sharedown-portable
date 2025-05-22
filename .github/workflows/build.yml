@@ -12,6 +12,8 @@ permissions:
 jobs:
   test:
     runs-on: windows-latest
+    env:
+      sharedownVersion: 5.3.6
     steps:
       - uses: actions/checkout@v4
       
@@ -21,7 +23,7 @@ jobs:
           
       - shell: cmd
         run: |
-          curl https://github.com/kylon/Sharedown/releases/download/${{ github.ref_name }}/sharedown-${{ github.ref_name }}-win.7z -L --output installer.7z &&^
+          curl https://github.com/kylon/Sharedown/releases/download/${{ env.sharedownVersion }}/sharedown-${{ env.sharedownVersion }}-win.7z -L --output installer.7z &&^
           7z x installer.7z -o"sharedown-portable\sharedown" &&^
           dir
 
