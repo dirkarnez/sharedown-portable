@@ -1,0 +1,59 @@
+name: portable-build-actions-workflow
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+      - 'c*'
+      
+permissions:
+    contents: write
+    
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - shell: cmd
+        run: |
+          md sharedown-portable
+          
+      - shell: cmd
+        run: |
+          curl https://github.com/kylon/Sharedown/releases/download/${{ github.ref_name }}/sharedown-${{ github.ref_name }}-win.7z -L --output installer.7z &&^
+          7z x installer.7z -o"sharedown-portable\sharedown" &&^
+          dir
+
+      - shell: cmd
+        run: |
+          cd "sharedown-portable" &&^
+          md yt-dlp_win &&^
+          cd yt-dlp_win &&^
+          curl https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe -L --output yt-dlp.exe &&^
+          dir
+          
+      - shell: cmd
+        run: |
+          curl https://github.com/GyanD/codexffmpeg/releases/download/6.0/ffmpeg-6.0-full_build-shared.zip -L --output ffmpeg.zip &&^
+          cd "sharedown-portable" &&^
+          7z x ..\ffmpeg.zip -o"ffmpeg-6.0-full_build-shared" &&^
+          dir
+
+      - shell: cmd
+        run: xcopy /H /Y /C "sharedown.Portable.cmd" "sharedown-portable\sharedown"
+
+      - name: Archive Release
+        uses: thedoctor0/zip-release@master
+        with:
+          type: 'zip'
+          directory: "sharedown-portable"
+          filename: "sharedown-${{ github.ref_name }}-portable.zip"
+
+      - name: Release prebuilt
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "sharedown-${{ github.ref_name }}-portable.zip"
+          allowUpdates: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
