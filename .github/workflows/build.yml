@@ -1,0 +1,94 @@
+name: portable-build-actions-workflow
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+      - 'c*'
+      
+permissions:
+    contents: write
+    
+jobs:
+  test:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        node-version: [22.x] # 18.x, 20.x, 
+    env:
+      sharedownVersion: 5.3.6
+    steps:
+      - uses: actions/checkout@v5
+      
+      - shell: cmd
+        run: |
+          md sharedown-portable &&^
+          cd sharedown-portable &&^
+          md sharedown
+          
+      - uses: actions/checkout@v5
+        with:
+          repository: 'kylon/Sharedown'
+          path: 'sharedown'  # 'sharedown-portable/sharedown'
+          ref: 'f3d587cc3e24f7ff8fe4732e1465cb92eb420be3'
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          
+      - shell: cmd
+        run: |
+          dir /S
+          
+      - working-directory: 'sharedown'
+        shell: bash
+        run: |
+          npm i && \
+          npm run-script pack && \
+          ls -R
+          
+      # - shell: cmd
+      #   run: |
+      #     curl https://github.com/kylon/Sharedown/releases/download/${{ env.sharedownVersion }}/sharedown-${{ env.sharedownVersion }}-win.7z -L --output installer.7z &&^
+      #     7z x installer.7z -o"sharedown-portable\sharedown" &&^
+      #     dir
+
+      - shell: cmd
+        run: |
+          cd "sharedown\dist" &&^
+          md yt-dlp_win &&^
+          cd yt-dlp_win &&^
+          curl https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe -L --output yt-dlp.exe &&^
+          dir
+          
+      - shell: cmd
+        run: |
+          curl https://github.com/GyanD/codexffmpeg/releases/download/6.0/ffmpeg-6.0-full_build-shared.zip -L --output ffmpeg.zip &&^
+          cd "sharedown\dist" &&^
+          7z x ..\..\ffmpeg.zip -o"ffmpeg-6.0-full_build-shared" &&^
+          dir
+          
+      - shell: cmd
+        run: xcopy /H /Y /C "sharedown.Portable.cmd" "sharedown\dist\win-unpacked"
+          
+      - shell: cmd
+        run: |
+          cd /d "sharedown\dist" &&^
+          ren "win-unpacked" "sharedown"
+        
+      - name: Archive Release
+        uses: thedoctor0/zip-release@master
+        with:
+          type: 'zip'
+          directory: "sharedown/dist"
+          exclusions: 'builder-debug.yml .icon-ico'
+          filename: "sharedown-${{ github.ref_name }}-portable.zip"
+
+      - name: Release prebuilt
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "sharedown/dist/sharedown-${{ github.ref_name }}-portable.zip"
+          allowUpdates: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
